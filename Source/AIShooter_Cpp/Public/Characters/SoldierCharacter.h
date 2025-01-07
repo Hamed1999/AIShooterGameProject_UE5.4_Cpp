@@ -50,4 +50,6 @@ private:
 		UInputAction* IA_MoveRight;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Inputs", meta=(AllowPrivateAccess=true))
 		UInputAction* IA_TurnCamerView;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Inputs", meta=(AllowPrivateAccess=true))
+		UInputAction* IA_Jump;
 };

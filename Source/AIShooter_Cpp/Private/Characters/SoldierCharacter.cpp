@@ -60,6 +60,8 @@ void ASoldierCharacter::BindEnhancedInputActions(UInputComponent* PlayerInputCom
 		EnhancedInputComponent->BindAction(IA_MoveForward, ETriggerEvent::Triggered, this, &ASoldierCharacter::MoveForward);
 		EnhancedInputComponent->BindAction(IA_MoveRight, ETriggerEvent::Triggered, this, &ASoldierCharacter::MoveRight);
 		EnhancedInputComponent->BindAction(IA_TurnCamerView, ETriggerEvent::Triggered, this, &ASoldierCharacter::TurnView);
+		EnhancedInputComponent->BindAction(IA_Jump, ETriggerEvent::Started, this, &ASoldierCharacter::Jump);
+		EnhancedInputComponent->BindAction(IA_Jump, ETriggerEvent::Completed, this, &ASoldierCharacter::StopJumping);
 	}
 }
 
