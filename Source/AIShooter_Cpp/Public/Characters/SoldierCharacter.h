@@ -20,7 +20,8 @@ protected:
 public:	
 	virtual void Tick(float DeltaTime) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gun")
+		bool bIsFiring = false;
 private:
 /**
  * Methods
@@ -28,11 +29,12 @@ private:
 	void CreateSpringArm();
 	void CreateCamera();
 	void CreateMappingContext();
+	void SpawnGun();
 	void BindEnhancedInputActions(UInputComponent* PlayerInputComponent);
 	void MoveForward(const struct FInputActionValue& InputActionValue);
 	void MoveRight(const struct FInputActionValue& InputActionValue);
 	void TurnView(const struct FInputActionValue& InputActionValue);
-	
+	void Fire();
 /**
 * Global Properties
 */
@@ -52,4 +54,10 @@ private:
 		UInputAction* IA_TurnCamerView;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Inputs", meta=(AllowPrivateAccess=true))
 		UInputAction* IA_Jump;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default Inputs", meta=(AllowPrivateAccess=true))
+		UInputAction* IA_Fire;
+	// Properties
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gun", meta=(AllowPrivateAccess=true))
+		TSubclassOf<class AGun> GunClass = nullptr;
+	AGun* Gun = nullptr;
 };

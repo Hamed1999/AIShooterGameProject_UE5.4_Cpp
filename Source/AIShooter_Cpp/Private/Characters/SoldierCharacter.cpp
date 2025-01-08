@@ -10,6 +10,9 @@
 #include "EnhancedInputComponent.h"
 #include "InputAction.h"
 #include "InputMappingContext.h"
+#include "MovieSceneTracksComponentTypes.h"
+#include "Kismet/GameplayStatics.h"
+#include "Actors/Gun.h"
 
 
 void ASoldierCharacter::CreateSpringArm()
@@ -42,10 +45,22 @@ void ASoldierCharacter::CreateMappingContext()
 	}
 }
 
+void ASoldierCharacter::SpawnGun()
+{
+	GetMesh()->HideBoneByName(FName("gun"), PBO_None);
+	if (GunClass)
+	{
+		Gun = GetWorld()->SpawnActor<AGun>(GunClass);
+		Gun->AttachToComponent(GetMesh(), FAttachmentTransformRules::KeepRelativeTransform, FName("GunSocket"));
+		Gun->SetOwner(this);
+	}
+}
+
 void ASoldierCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	CreateMappingContext();
+	SpawnGun();
 }
 
 void ASoldierCharacter::Tick(float DeltaTime)
@@ -62,6 +77,7 @@ void ASoldierCharacter::BindEnhancedInputActions(UInputComponent* PlayerInputCom
 		EnhancedInputComponent->BindAction(IA_TurnCamerView, ETriggerEvent::Triggered, this, &ASoldierCharacter::TurnView);
 		EnhancedInputComponent->BindAction(IA_Jump, ETriggerEvent::Started, this, &ASoldierCharacter::Jump);
 		EnhancedInputComponent->BindAction(IA_Jump, ETriggerEvent::Completed, this, &ASoldierCharacter::StopJumping);
+		EnhancedInputComponent->BindAction(IA_Fire, ETriggerEvent::Triggered, this, &ASoldierCharacter::Fire);
 	}
 }
 
@@ -88,4 +104,19 @@ void ASoldierCharacter::TurnView(const FInputActionValue& InputActionValue)
 	FVector2D InputValue = InputActionValue.Get<FVector2D>();
 	AddControllerYawInput(InputValue.X);
 	AddControllerPitchInput(-1* InputValue.Y);
+}
+
+void ASoldierCharacter::Fire()
+{
+	bIsFiring = true;
+	if (Gun)
+		Gun->Shoot();
+
+	FTimerHandle TimerHandle;
+	FTimerDelegate TimerDel;
+	TimerDel.BindLambda([&]()
+	{
+		bIsFiring = false;
+	});
+	GetWorldTimerManager().SetTimer(TimerHandle, TimerDel, 0.2, false);
 }
