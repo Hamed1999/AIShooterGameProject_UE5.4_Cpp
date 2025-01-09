@@ -13,7 +13,13 @@
 #include "MovieSceneTracksComponentTypes.h"
 #include "Kismet/GameplayStatics.h"
 #include "Actors/Gun.h"
+#include "Components/CapsuleComponent.h"
 
+
+bool ASoldierCharacter::IsDead()
+{
+	return Health <= 0;
+}
 
 void ASoldierCharacter::CreateSpringArm()
 {
@@ -61,6 +67,7 @@ void ASoldierCharacter::BeginPlay()
 	Super::BeginPlay();
 	CreateMappingContext();
 	SpawnGun();
+	Health = MaxHealth;
 }
 
 void ASoldierCharacter::Tick(float DeltaTime)
@@ -119,4 +126,29 @@ void ASoldierCharacter::Fire()
 		bIsFiring = false;
 	});
 	GetWorldTimerManager().SetTimer(TimerHandle, TimerDel, 0.2, false);
+}
+
+float ASoldierCharacter::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent,
+	class AController* EventInstigator, AActor* DamageCauser)
+{
+	const float ActualDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+	Health -= ActualDamage;
+	if (Health <= 0)
+		HandleDeath();
+	UE_LOG(LogTemp, Error, TEXT("Health of %s: %f"), *GetName(), Health);
+	return ActualDamage;
+}
+
+void ASoldierCharacter::HandleDeath()
+{
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	DetachFromControllerPendingDestroy();
+	FTimerHandle DestroyTimerHandle;
+	FTimerDelegate DestroyTimerDel;
+	DestroyTimerDel.BindLambda([&]()
+	{
+		Destroy();
+		Gun->Destroy();
+	});
+	GetWorldTimerManager().SetTimer(DestroyTimerHandle, DestroyTimerDel, 7.0, false);
 }

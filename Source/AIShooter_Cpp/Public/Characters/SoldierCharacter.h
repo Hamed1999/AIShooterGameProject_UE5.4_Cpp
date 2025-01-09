@@ -22,6 +22,8 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gun")
 		bool bIsFiring = false;
+	UFUNCTION(BlueprintPure)
+		bool IsDead();
 private:
 /**
  * Methods
@@ -35,6 +37,9 @@ private:
 	void MoveRight(const struct FInputActionValue& InputActionValue);
 	void TurnView(const struct FInputActionValue& InputActionValue);
 	void Fire();
+	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent,
+		class AController* EventInstigator, AActor* DamageCauser) override;
+	void HandleDeath();
 /**
 * Global Properties
 */
@@ -60,4 +65,7 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gun", meta=(AllowPrivateAccess=true))
 		TSubclassOf<class AGun> GunClass = nullptr;
 	AGun* Gun = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health", meta=(AllowPrivateAccess=true, ClampMin = "0"))
+		float MaxHealth = 100;
+	float Health;
 };
