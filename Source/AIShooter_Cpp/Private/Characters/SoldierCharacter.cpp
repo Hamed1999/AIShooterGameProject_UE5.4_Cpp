@@ -53,10 +53,15 @@ void ASoldierCharacter::CreateMappingContext()
 
 void ASoldierCharacter::SpawnGun()
 {
-	GetMesh()->HideBoneByName(FName("gun"), PBO_None);
 	if (GunClass)
 	{
 		Gun = GetWorld()->SpawnActor<AGun>(GunClass);
+		if (Team == ESoldierTeam::Peace)
+			GetMesh()->HideBoneByName(FName("gun"), PBO_None);
+		else
+		{
+			Gun->HideMesh();
+		}
 		Gun->AttachToComponent(GetMesh(), FAttachmentTransformRules::KeepRelativeTransform, FName("GunSocket"));
 		Gun->SetOwner(this);
 	}

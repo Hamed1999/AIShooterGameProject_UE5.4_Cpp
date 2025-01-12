@@ -5,7 +5,8 @@
 
 #include "DrawDebugHelpers.h"
 #include "Kismet/GameplayStatics.h"
-#include "Engine/DamageEvents.h"
+//#include "Engine/DamageEvents.h"
+#include "Characters/SoldierCharacter.h"
 
 #define OUT
 
@@ -42,12 +43,27 @@ void AGun::Tick(float DeltaTime)
 
 void AGun::HandleFiringEffects()
 {
+
+	FName TargetSocket;
+	USkeletalMeshComponent* TargetMeshComponent;
+	FRotator TargetRotator = FRotator(0.f);
+	if(bHideMesh)
+	{
+		TargetMeshComponent = Cast<ASoldierCharacter>(GetOwner())->GetMesh();
+		TargetSocket = FName("gun_barrel");
+		TargetRotator = FRotator(-90.f, -90 , 0);
+	}
+	else
+	{
+		TargetMeshComponent = GunMeshComponent;
+		TargetSocket = FName("MuzzleFlash");
+	}
 	if(FireSound)
-		UGameplayStatics::SpawnSoundAttached(FireSound, GunMeshComponent, FName("MuzzleFlash"));
+		UGameplayStatics::SpawnSoundAttached(FireSound, TargetMeshComponent, TargetSocket, FVector(0), TargetRotator);
 	for (UParticleSystem* FireParticle : FireParticles)
 	{
 		if(FireParticle)
-			UGameplayStatics::SpawnEmitterAttached(FireParticle, GunMeshComponent, FName("MuzzleFlash"));
+			UGameplayStatics::SpawnEmitterAttached(FireParticle, TargetMeshComponent, TargetSocket, FVector(0), TargetRotator);
 	}
 }
 
@@ -136,4 +152,10 @@ void  AGun::Shoot()
 			HandleRadialDamage(BulletHitResults);
 		}
 	}
+}
+
+void AGun::HideMesh()
+{
+	bHideMesh = true;
+	GunMeshComponent->SetVisibility(false);
 }

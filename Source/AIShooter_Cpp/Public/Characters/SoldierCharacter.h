@@ -6,6 +6,13 @@
 #include "GameFramework/Character.h"
 #include "SoldierCharacter.generated.h"
 
+UENUM(BlueprintType)
+enum class ESoldierTeam : uint8
+{
+	Peace UMETA(DisplayName = "Peace Team"),
+	Devil UMETA(DisplayName = "Devil Team")
+};
+
 UCLASS()
 class AISHOOTER_CPP_API ASoldierCharacter : public ACharacter
 {
@@ -68,4 +75,6 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health", meta=(AllowPrivateAccess=true, ClampMin = "0"))
 		float MaxHealth = 100;
 	float Health;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Team", meta=(AllowPrivateAccess=true))
+		ESoldierTeam Team = ESoldierTeam::Peace;
 };
