@@ -60,6 +60,7 @@ private:
 		float TraceRange = 43000;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Properties | Damage | Base", meta=(AllowPrivateAccess=true, ClampMin = "0"))
 		float BaseDamage = 12.f;
+	float Damage = BaseDamage;
 	bool bHideMesh = false;
 	/** Indicates how damage will apply to actors.*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Properties | Damage | Base", meta=(AllowPrivateAccess=tru))

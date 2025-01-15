@@ -70,7 +70,8 @@ void AGun::HandleFiringEffects()
 void AGun::FindCameraPoint()
 {
 	if (APawn* OwnerPawn =Cast<APawn>(GetOwner()))
-		OwnerPawn->GetController()->GetPlayerViewPoint(OUT CameraLocation, OUT CameraRotation);
+		if (AController* Controller = OwnerPawn->GetController())
+			Controller->GetPlayerViewPoint(OUT CameraLocation, OUT CameraRotation);
 	// DrawDebugCamera(GetWorld(), CameraLocation, CameraRotation, 90, 2, FColor::Red, false, 1);
 }
 
@@ -110,7 +111,7 @@ void AGun::HandleApplyDamage(FHitResult const& BulletHitResults, APawn* const& D
 		FVector ShotVector = BulletHitResults.ImpactPoint - CameraLocation;
 		FVector ShotDirection = ShotVector.GetSafeNormal();
 		AController* OwnerInstigator = Cast<APawn>(GetOwner())->GetController();
-		UGameplayStatics::ApplyPointDamage(DamagedPawn, BaseDamage, ShotDirection, BulletHitResults,
+		UGameplayStatics::ApplyPointDamage(DamagedPawn, Damage, ShotDirection, BulletHitResults,
 			OwnerInstigator, this, DamageTypeClass);
 	}
 	else
@@ -144,6 +145,10 @@ void  AGun::Shoot()
 		if(APawn* DamagedPawn = Cast<APawn>(BulletHitResults.GetActor())) // Modify Later
 		{
 			HandleBodyImpactEffects(BulletHitResults);
+			if (BulletHitResults.BoneName == "head")
+				Damage = 100;
+			else
+				Damage = BaseDamage;
 			HandleApplyDamage(BulletHitResults, DamagedPawn);
 		}
 		else /** If impactes with anything except Pawns or Characters such as Soldier Character*/

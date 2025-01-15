@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GenericTeamAgentInterface.h"
 #include "GameFramework/Character.h"
 #include "SoldierCharacter.generated.h"
 
@@ -10,11 +11,12 @@ UENUM(BlueprintType)
 enum class ESoldierTeam : uint8
 {
 	Peace UMETA(DisplayName = "Peace Team"),
-	Devil UMETA(DisplayName = "Devil Team")
+	Devil UMETA(DisplayName = "Devil Team"),
+	Neutral UMETA(DisplayName = "NPC")
 };
 
 UCLASS()
-class AISHOOTER_CPP_API ASoldierCharacter : public ACharacter
+class AISHOOTER_CPP_API ASoldierCharacter : public ACharacter, public IGenericTeamAgentInterface
 {
 	GENERATED_BODY()
 
@@ -31,6 +33,8 @@ public:
 		bool bIsFiring = false;
 	UFUNCTION(BlueprintPure)
 		bool IsDead();
+	virtual FGenericTeamId GetGenericTeamId() const override;
+	void Fire();
 private:
 /**
  * Methods
@@ -39,11 +43,12 @@ private:
 	void CreateCamera();
 	void CreateMappingContext();
 	void SpawnGun();
+	void SetTeamId();
 	void BindEnhancedInputActions(UInputComponent* PlayerInputComponent);
 	void MoveForward(const struct FInputActionValue& InputActionValue);
 	void MoveRight(const struct FInputActionValue& InputActionValue);
 	void TurnView(const struct FInputActionValue& InputActionValue);
-	void Fire();
+	
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent,
 		class AController* EventInstigator, AActor* DamageCauser) override;
 	void HandleDeath();
@@ -77,4 +82,6 @@ private:
 	float Health;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Team", meta=(AllowPrivateAccess=true))
 		ESoldierTeam Team = ESoldierTeam::Peace;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Team", meta=(AllowPrivateAccess=true))
+		FGenericTeamId TeamId = FGenericTeamId(0);
 };

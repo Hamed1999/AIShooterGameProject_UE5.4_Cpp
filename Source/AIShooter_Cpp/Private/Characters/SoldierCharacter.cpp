@@ -67,12 +67,24 @@ void ASoldierCharacter::SpawnGun()
 	}
 }
 
+void ASoldierCharacter::SetTeamId()
+{
+	if (Team == ESoldierTeam::Peace)
+		TeamId = FGenericTeamId(0);
+	else if (Team == ESoldierTeam::Devil)
+		TeamId = FGenericTeamId(1);
+	else
+		TeamId = FGenericTeamId(255);
+	SetGenericTeamId(TeamId);
+}
+
 void ASoldierCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	CreateMappingContext();
 	SpawnGun();
 	Health = MaxHealth;
+	SetTeamId();
 }
 
 void ASoldierCharacter::Tick(float DeltaTime)
@@ -148,6 +160,11 @@ void ASoldierCharacter::HandleDeath()
 {
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	DetachFromControllerPendingDestroy();
+	if (Team == ESoldierTeam::Peace) //  && Is this Character the first player?
+	{
+		GetWorld()->GetFirstPlayerController()->StartSpectatingOnly();
+	}
+	
 	FTimerHandle DestroyTimerHandle;
 	FTimerDelegate DestroyTimerDel;
 	DestroyTimerDel.BindLambda([&]()
@@ -156,4 +173,9 @@ void ASoldierCharacter::HandleDeath()
 		Gun->Destroy();
 	});
 	GetWorldTimerManager().SetTimer(DestroyTimerHandle, DestroyTimerDel, 7.0, false);
+}
+
+FGenericTeamId ASoldierCharacter::GetGenericTeamId() const
+{
+	return TeamId;
 }
