@@ -75,10 +75,21 @@ void AGun::FindCameraPoint()
 	// DrawDebugCamera(GetWorld(), CameraLocation, CameraRotation, 90, 2, FColor::Red, false, 1);
 }
 
+void AGun::SetCollisionIgnoredActors(FCollisionQueryParams& Params)
+{
+	TArray<AActor*> IgnoreActors;
+	IgnoreActors.Add(this);
+	IgnoreActors.Add(GetOwner());
+	Params.AddIgnoredActors(IgnoreActors);
+}
+
 bool AGun::ApplyBulletTrace(FHitResult& BulletHitResults)
 {
 	FVector TraceEnd = CameraLocation + TraceRange * CameraRotation.Vector();
-	bool HitSomething = GetWorld()->LineTraceSingleByChannel(BulletHitResults, CameraLocation, TraceEnd, ECollisionChannel::ECC_GameTraceChannel1);
+	FCollisionQueryParams Params;
+	SetCollisionIgnoredActors(OUT Params);
+	bool HitSomething = GetWorld()->LineTraceSingleByChannel(BulletHitResults, CameraLocation,
+		TraceEnd, ECollisionChannel::ECC_GameTraceChannel1, Params);
 	// DrawDebugLine(GetWorld(), CameraLocation, TraceEnd, FColor::Yellow, false, 1, 0, 2);
 	return HitSomething;
 }

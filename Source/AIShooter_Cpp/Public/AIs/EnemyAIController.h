@@ -13,15 +13,11 @@ UCLASS()
 class AISHOOTER_CPP_API AEnemyAIController : public AAIController
 {
 	GENERATED_BODY()
-
 public:
-	void CreatePerceptionComponent();
-	void CreateSightSenseConfig();
-	void BindOnPlayerSeen();
 	AEnemyAIController();
-	void SetTeamId();
 	virtual void Tick(float DeltaTime) override;
-
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Destination")
+		FVector DestinationLocation = FVector(-118.164852,4731.627344,134.400094);
 protected:
 	virtual void BeginPlay() override;
 	/**
@@ -29,10 +25,14 @@ protected:
 	*/
 	UFUNCTION(BlueprintType)
 		void OnPlayerSeen(AActor* Actor, struct FAIStimulus Stimulus);
+	void CreatePerceptionComponent();
+	void CreateSightSenseConfig();
+	void BindOnPlayerSeen();
+	void SetTeamId();
+	void SetBlackboardLocationValues();
 	/**
 	 * Global Properties
 	 */
-	APawn* Player;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI", meta=(AllowPrivateAccess=true))
 		UBehaviorTree* BT_Enemy;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI", meta=(AllowPrivateAccess=true))
@@ -40,4 +40,5 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI", meta=(AllowPrivateAccess=true))
 		FGenericTeamId TeamId = FGenericTeamId(1);
 	class ASoldierCharacter* SoldierPlayer;
+	
 };

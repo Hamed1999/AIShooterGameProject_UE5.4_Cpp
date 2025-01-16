@@ -40,6 +40,7 @@ private:
 	void CreateMeshComponent();
 	void HandleFiringEffects();
 	void FindCameraPoint();
+	void SetCollisionIgnoredActors(FCollisionQueryParams& Params);
 	bool ApplyBulletTrace(FHitResult& BulletHitResults);
 	void HandleBodyImpactEffects(FHitResult const& BulletHitResults);
 	void HandleSurfaceImpactEffects(FHitResult const& BulletHitResults);

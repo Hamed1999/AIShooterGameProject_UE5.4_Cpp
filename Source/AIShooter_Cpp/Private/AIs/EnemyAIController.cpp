@@ -22,10 +22,11 @@ void AEnemyAIController::CreateSightSenseConfig()
 {
 	UAISenseConfig_Sight* SightConfig;
 	SightConfig = CreateDefaultSubobject<UAISenseConfig_Sight>(FName("Sight Config"));
-	SightConfig->SightRadius = 1500.0f;
-	SightConfig->LoseSightRadius = 3500.0f;
+	SightConfig->SightRadius = 5000.0f;
+	SightConfig->LoseSightRadius = 10000.0f;
 	SightConfig->PeripheralVisionAngleDegrees = 70.0f;
-	SightConfig->DetectionByAffiliation = FAISenseAffiliationFilter(true, true, true);
+	SightConfig->DetectionByAffiliation = FAISenseAffiliationFilter(true,
+		false, false); 
 	AIPerceptionComponent->ConfigureSense(*SightConfig);
 }
 
@@ -54,34 +55,38 @@ void AEnemyAIController::SetTeamId()
 	SetGenericTeamId(TeamId);
 }
 
+void AEnemyAIController::SetBlackboardLocationValues()
+{
+	GetBlackboardComponent()->SetValueAsVector(FName("FirstLocation"), GetPawn()->GetActorLocation());
+	GetBlackboardComponent()->SetValueAsVector(FName("Destination"), DestinationLocation);
+}
+
 void AEnemyAIController::BeginPlay()
 {
 	Super::BeginPlay();
-	Player = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
 	RunBehaviorTree(BT_Enemy);
 	SetTeamId();
+	SetBlackboardLocationValues();
+	
 }
 
 void AEnemyAIController::OnPlayerSeen(AActor* Actor, FAIStimulus Stimulus)
 {
 	if(Stimulus.WasSuccessfullySensed())
 	{
-		UE_LOG(LogTemp, Error, TEXT("In Sight...."))
-		GetBlackboardComponent()->SetValueAsObject(FName("Player"), Player);
-		SetFocus(Player);
-		// FTimerHandle FireTimerHandle;
-		// FTimerDelegate FireTimerDelegate;
-		// FireTimerDelegate.BindLambda([&]()
-		// {
-		// 	SoldierPlayer->Fire();
-		// });
-		// GetWorldTimerManager().SetTimer(FireTimerHandle, FireTimerDelegate, 0.3,true);
+		if (Cast<ASoldierCharacter>(Actor)->GetPlayerHealth() > 0)
+		{
+			GetBlackboardComponent()->SetValueAsObject(FName("Player"), Actor);
+			SetFocus(Actor);
+		}
+		else
+			GetBlackboardComponent()->ClearValue(FName("Player"));
 	}
 	else
 	{
-		UE_LOG(LogTemp, Error, TEXT("Out of Sight !!!!!"))
 		GetBlackboardComponent()->ClearValue(FName("Player"));
-		SetFocus(nullptr);
+		ClearFocus(EAIFocusPriority::Gameplay);
+		GetBlackboardComponent()->SetValueAsVector(FName("LastSeenLocation"), Actor->GetActorLocation());
 	}
 }
 

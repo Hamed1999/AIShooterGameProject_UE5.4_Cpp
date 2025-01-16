@@ -13,12 +13,18 @@
 #include "MovieSceneTracksComponentTypes.h"
 #include "Kismet/GameplayStatics.h"
 #include "Actors/Gun.h"
+#include "AIs/EnemyAIController.h"
 #include "Components/CapsuleComponent.h"
 
 
 bool ASoldierCharacter::IsDead()
 {
 	return Health <= 0;
+}
+
+float ASoldierCharacter::GetPlayerHealth()
+{
+	return Health / MaxHealth;
 }
 
 void ASoldierCharacter::CreateSpringArm()
@@ -78,6 +84,12 @@ void ASoldierCharacter::SetTeamId()
 	SetGenericTeamId(TeamId);
 }
 
+void ASoldierCharacter::SetAIController()
+{
+	if (!bIsLeader)
+		AIControllerClass = AEnemyAIController::StaticClass();
+}
+
 void ASoldierCharacter::BeginPlay()
 {
 	Super::BeginPlay();
@@ -85,6 +97,7 @@ void ASoldierCharacter::BeginPlay()
 	SpawnGun();
 	Health = MaxHealth;
 	SetTeamId();
+	SetAIController();
 }
 
 void ASoldierCharacter::Tick(float DeltaTime)
@@ -142,7 +155,7 @@ void ASoldierCharacter::Fire()
 	{
 		bIsFiring = false;
 	});
-	GetWorldTimerManager().SetTimer(TimerHandle, TimerDel, 0.2, false);
+	GetWorldTimerManager().SetTimer(TimerHandle, TimerDel, 0.01, false);
 }
 
 float ASoldierCharacter::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent,
@@ -160,7 +173,7 @@ void ASoldierCharacter::HandleDeath()
 {
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	DetachFromControllerPendingDestroy();
-	if (Team == ESoldierTeam::Peace) //  && Is this Character the first player?
+	if (Team == ESoldierTeam::Peace && bIsLeader)
 	{
 		GetWorld()->GetFirstPlayerController()->StartSpectatingOnly();
 	}
