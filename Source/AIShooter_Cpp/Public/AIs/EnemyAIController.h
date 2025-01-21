@@ -20,6 +20,7 @@ public:
 		FVector DestinationLocation = FVector(-118.164852,4731.627344,134.400094);
 protected:
 	virtual void BeginPlay() override;
+	virtual void OnPossess(APawn* InPawn) override;
 	/**
 	*Methods
 	*/
@@ -28,6 +29,7 @@ protected:
 	void CreatePerceptionComponent();
 	void CreateSightSenseConfig();
 	void BindOnPlayerSeen();
+	void SetBehaviorTree();
 	void SetTeamId();
 	void SetBlackboardLocationValues();
 	/**
@@ -39,6 +41,4 @@ protected:
 		UAIPerceptionComponent* AIPerceptionComponent;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI", meta=(AllowPrivateAccess=true))
 		FGenericTeamId TeamId = FGenericTeamId(1);
-	class ASoldierCharacter* SoldierPlayer;
-	
 };

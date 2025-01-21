@@ -48,7 +48,7 @@ private:
 	void CreateMappingContext();
 	void SpawnGun();
 	void SetTeamId();
-	void SetAIController();
+	void SetAIControllerClass();
 	void BindEnhancedInputActions(UInputComponent* PlayerInputComponent);
 	void MoveForward(const struct FInputActionValue& InputActionValue);
 	void MoveRight(const struct FInputActionValue& InputActionValue);

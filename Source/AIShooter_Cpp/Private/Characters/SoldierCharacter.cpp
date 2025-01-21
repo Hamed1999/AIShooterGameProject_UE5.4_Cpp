@@ -44,6 +44,7 @@ ASoldierCharacter::ASoldierCharacter()
 	PrimaryActorTick.bCanEverTick = true;
 	CreateSpringArm();
 	CreateCamera();
+	SetAIControllerClass();
 }
 
 void ASoldierCharacter::CreateMappingContext()
@@ -84,9 +85,9 @@ void ASoldierCharacter::SetTeamId()
 	SetGenericTeamId(TeamId);
 }
 
-void ASoldierCharacter::SetAIController()
+void ASoldierCharacter::SetAIControllerClass()
 {
-	if (!bIsLeader)
+	if(!bIsLeader)
 		AIControllerClass = AEnemyAIController::StaticClass();
 }
 
@@ -97,7 +98,6 @@ void ASoldierCharacter::BeginPlay()
 	SpawnGun();
 	Health = MaxHealth;
 	SetTeamId();
-	SetAIController();
 }
 
 void ASoldierCharacter::Tick(float DeltaTime)

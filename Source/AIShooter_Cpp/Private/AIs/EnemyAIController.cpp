@@ -35,12 +35,18 @@ void AEnemyAIController::BindOnPlayerSeen()
 	AIPerceptionComponent->OnTargetPerceptionUpdated.AddDynamic(this, &AEnemyAIController::OnPlayerSeen);
 }
 
-AEnemyAIController::AEnemyAIController()
+void AEnemyAIController::SetBehaviorTree()
 {
 	ConstructorHelpers::FObjectFinder<UBehaviorTree> BehaviorTreeRef(TEXT("/Game/AI/BT_Enemy"));
 	if (BehaviorTreeRef.Succeeded())
 		BT_Enemy = BehaviorTreeRef.Object.Get();
+}
+
+AEnemyAIController::AEnemyAIController()
+{
+	SetBehaviorTree();
 	CreatePerceptionComponent();
+	SetTeamId();
 	BindOnPlayerSeen();
 }
 
@@ -48,15 +54,14 @@ void AEnemyAIController::SetTeamId()
 {
 	if(Cast<ASoldierCharacter>(GetCharacter()))
 	{
-		SoldierPlayer = Cast<ASoldierCharacter>(GetCharacter());
 		TeamId = Cast<ASoldierCharacter>(GetCharacter())->GetGenericTeamId();
 	}
-		
 	SetGenericTeamId(TeamId);
 }
 
 void AEnemyAIController::SetBlackboardLocationValues()
 {
+	if(!GetBlackboardComponent()) return;
 	GetBlackboardComponent()->SetValueAsVector(FName("FirstLocation"), GetPawn()->GetActorLocation());
 	GetBlackboardComponent()->SetValueAsVector(FName("Destination"), DestinationLocation);
 }
@@ -64,25 +69,53 @@ void AEnemyAIController::SetBlackboardLocationValues()
 void AEnemyAIController::BeginPlay()
 {
 	Super::BeginPlay();
-	RunBehaviorTree(BT_Enemy);
 	SetTeamId();
-	SetBlackboardLocationValues();
-	
+	FTimerHandle TimerHandle;
+	FTimerDelegate TimerDelegate;
+	TimerDelegate.BindLambda([&]()
+	{
+		if (BT_Enemy)
+		{
+			RunBehaviorTree(BT_Enemy);
+			if (GetPawn())
+				SetBlackboardLocationValues();
+		}
+	});
+     GetWorldTimerManager().SetTimer(TimerHandle,TimerDelegate,2,false);
+}
+
+void AEnemyAIController::OnPossess(APawn* InPawn)
+{
+	Super::OnPossess(InPawn);
+	if (InPawn && GetBlackboardComponent())
+	{
+		GetBlackboardComponent()->SetValueAsVector(FName("FirstLocation"), InPawn->GetActorLocation());
+		GetBlackboardComponent()->SetValueAsVector(FName("Destination"), DestinationLocation);
+		UE_LOG(LogTemp, Log, TEXT("Pawn possessed: %s"), *InPawn->GetName());
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("Failed to possess pawn or BlackboardComponent is null!"));
+	}
 }
 
 void AEnemyAIController::OnPlayerSeen(AActor* Actor, FAIStimulus Stimulus)
 {
-	if(Stimulus.WasSuccessfullySensed())
+	if(Stimulus.WasSuccessfullySensed()  && GetBlackboardComponent())
 	{
-		if (Cast<ASoldierCharacter>(Actor)->GetPlayerHealth() > 0)
+		if (ASoldierCharacter* SoldierPlayer = Cast<ASoldierCharacter>(Actor))
 		{
-			GetBlackboardComponent()->SetValueAsObject(FName("Player"), Actor);
-			SetFocus(Actor);
+			if (float Health = SoldierPlayer->GetPlayerHealth() > 0)
+			{
+				GetBlackboardComponent()->SetValueAsObject(FName("Player"), SoldierPlayer);
+				GetBlackboardComponent()->SetValueAsFloat(FName("PlayerHealth"), Health);
+				SetFocus(SoldierPlayer);
+			}
+			else
+				GetBlackboardComponent()->ClearValue(FName("Player"));
 		}
-		else
-			GetBlackboardComponent()->ClearValue(FName("Player"));
 	}
-	else
+	else if (GetBlackboardComponent())
 	{
 		GetBlackboardComponent()->ClearValue(FName("Player"));
 		ClearFocus(EAIFocusPriority::Gameplay);

@@ -4,6 +4,7 @@
 #include "Tasks/BTTask_Shoot.h"
 #include "Characters/SoldierCharacter.h"
 #include "AIController.h"
+#include "BehaviorTree/BlackboardComponent.h"
 
 UBTTask_Shoot::UBTTask_Shoot(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
@@ -16,7 +17,11 @@ EBTNodeResult::Type UBTTask_Shoot::ExecuteTask(UBehaviorTreeComponent& OwnerComp
 	if (AAIController* Controller = OwnerComp.GetAIOwner())
 		if (ASoldierCharacter* ShootingCharacter = Cast<ASoldierCharacter>(Controller->GetPawn()))
 		{
+			UBlackboardComponent* BlackBoard = OwnerComp.GetBlackboardComponent();
+			ASoldierCharacter* TargetSoldier = Cast<ASoldierCharacter>(BlackBoard->GetValueAsObject(FName("Player")));
+			BlackBoard->SetValueAsFloat(FName("PlayerHealth"), TargetSoldier->GetPlayerHealth());
 			ShootingCharacter->Fire();
+			BlackBoard->SetValueAsFloat(FName("PlayerHealth"), TargetSoldier->GetPlayerHealth());
 			return EBTNodeResult::Succeeded;
 		}
 	return EBTNodeResult::Failed;
