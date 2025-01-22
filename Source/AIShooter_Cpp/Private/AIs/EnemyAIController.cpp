@@ -84,21 +84,6 @@ void AEnemyAIController::BeginPlay()
      GetWorldTimerManager().SetTimer(TimerHandle,TimerDelegate,2,false);
 }
 
-void AEnemyAIController::OnPossess(APawn* InPawn)
-{
-	Super::OnPossess(InPawn);
-	if (InPawn && GetBlackboardComponent())
-	{
-		GetBlackboardComponent()->SetValueAsVector(FName("FirstLocation"), InPawn->GetActorLocation());
-		GetBlackboardComponent()->SetValueAsVector(FName("Destination"), DestinationLocation);
-		UE_LOG(LogTemp, Log, TEXT("Pawn possessed: %s"), *InPawn->GetName());
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("Failed to possess pawn or BlackboardComponent is null!"));
-	}
-}
-
 void AEnemyAIController::OnPlayerSeen(AActor* Actor, FAIStimulus Stimulus)
 {
 	if(Stimulus.WasSuccessfullySensed()  && GetBlackboardComponent())

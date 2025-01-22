@@ -25,6 +25,7 @@ void UPauseMenu::ResumeGame()
 
 void UPauseMenu::RestartGame()
 {
+	RemoveFromParent();
 	if(PlayerController)
 		PlayerController->RestartGame();
 }

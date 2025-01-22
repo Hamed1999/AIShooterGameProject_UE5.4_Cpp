@@ -20,7 +20,6 @@ public:
 		FVector DestinationLocation = FVector(-118.164852,4731.627344,134.400094);
 protected:
 	virtual void BeginPlay() override;
-	virtual void OnPossess(APawn* InPawn) override;
 	/**
 	*Methods
 	*/

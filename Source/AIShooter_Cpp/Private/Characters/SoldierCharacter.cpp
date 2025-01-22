@@ -15,7 +15,7 @@
 #include "Actors/Gun.h"
 #include "AIs/EnemyAIController.h"
 #include "Components/CapsuleComponent.h"
-
+#include "ShooterGameMode.h"
 
 bool ASoldierCharacter::IsDead()
 {
@@ -171,21 +171,16 @@ float ASoldierCharacter::TakeDamage(float DamageAmount, struct FDamageEvent cons
 
 void ASoldierCharacter::HandleDeath()
 {
+	AShooterGameMode* GameMode = Cast<AShooterGameMode>(GetWorld()->GetAuthGameMode());
+	GameMode->HandleKills(this);
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	DetachFromControllerPendingDestroy();
 	if (Team == ESoldierTeam::Peace && bIsLeader)
 	{
 		GetWorld()->GetFirstPlayerController()->StartSpectatingOnly();
 	}
-	
-	FTimerHandle DestroyTimerHandle;
-	FTimerDelegate DestroyTimerDel;
-	DestroyTimerDel.BindLambda([&]()
-	{
-		Destroy();
-		Gun->Destroy();
-	});
-	GetWorldTimerManager().SetTimer(DestroyTimerHandle, DestroyTimerDel, 7.0, false);
+	//SetLifeSpan(7.0);
+	//UnPossessed();
 }
 
 FGenericTeamId ASoldierCharacter::GetGenericTeamId() const

@@ -50,7 +50,21 @@ void AShooterPlayerController::ResumeGame()
 void AShooterPlayerController::RestartGame()
 {
 	ResumeGame();
+	//FTimerHandle TimerHandle;
+	//FTimerDelegate TimerDel;
+	/*TimerDel.BindLambda([&]()
+	{
+		
+	});
+	GetWorldTimerManager().SetTimer(TimerHandle, TimerDel, 8, false);*/
 	UGameplayStatics::OpenLevel(GetWorld(), FName("TestLevel"));
+}
+
+void AShooterPlayerController::SetEndGameClass()
+{
+	ConstructorHelpers::FClassFinder<UUserWidget> EndGame_Ref(TEXT("/Game/Widgets/WBP_EndGame"));
+	if(EndGame_Ref.Succeeded())
+		EndGameClass = EndGame_Ref.Class.Get();
 }
 
 AShooterPlayerController::AShooterPlayerController()
@@ -59,6 +73,26 @@ AShooterPlayerController::AShooterPlayerController()
 	SetInputMappingContext();
 	SetIA_Pause();
 	SetPauseMenuClass();
+	SetEndGameClass();
+}
+
+void AShooterPlayerController::GameHasEnded(AActor* EndGameFocus, bool bIsWinner)
+{
+	Super::GameHasEnded(EndGameFocus, bIsWinner);
+	bIsWon = bIsWinner;
+	if (UUserWidget* WBP_EndGame = CreateWidget<UUserWidget>(this, EndGameClass))
+	{
+		WBP_EndGame->AddToViewport();
+		SetGamePaused();
+	}
+}
+
+const FString AShooterPlayerController::GetMessage()
+{
+	FString WinMessage = FString("     WoW!\n You Win : ) ...");
+	FString LoseMessage = FString("    Oops : )\n Such A Looser ...");
+	FString Message = bIsWon ? WinMessage : LoseMessage;
+	return Message;
 }
 
 void AShooterPlayerController::CreateHUD()
@@ -95,16 +129,21 @@ void AShooterPlayerController::SetupInputComponent()
 	}
 }
 
+void AShooterPlayerController::SetGamePaused()
+{
+	DisableInput(this);
+	SetShowMouseCursor(true);
+	SetInputMode(FInputModeUIOnly());
+	UGameplayStatics::SetGamePaused(GetWorld(), true);
+}
+
 void AShooterPlayerController::PauseGame()
 {
 	if(UPauseMenu* WBP_PauseMenu = CreateWidget<UPauseMenu>(this ,PauseMenuClass))
 	{
 		WBP_PauseMenu->AddToViewport();
 		WBP_PauseMenu->SetupController(this);
-		DisableInput(this);
-		SetShowMouseCursor(true);
-		SetInputMode(FInputModeUIOnly());
-		UGameplayStatics::SetGamePaused(GetWorld(), true);
+		SetGamePaused();
 	}
 	
 }

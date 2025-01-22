@@ -15,13 +15,19 @@ class AISHOOTER_CPP_API AShooterPlayerController : public APlayerController
 	GENERATED_BODY()
 public:
 	void ResumeGame();
-	void RestartGame();
+	UFUNCTION(BlueprintCallable)
+		void RestartGame();
+	void SetEndGameClass();
 	AShooterPlayerController();
-	
+	virtual void GameHasEnded(AActor* EndGameFocus, bool bIsWinner) override;
+	UFUNCTION(BlueprintPure, Category="EndGame")
+	  const FString GetMessage();
 
 protected:
 	virtual void BeginPlay() override;
 	virtual void SetupInputComponent() override;
+	void SetGamePaused();
+
 private:
 	/**
 	* Methods
@@ -38,6 +44,8 @@ private:
 	 */
 	TSubclassOf<class UPlayerHUD> PlayerHUDClass;
 	TSubclassOf<class UPauseMenu> PauseMenuClass;
+	TSubclassOf<UUserWidget> EndGameClass;
+	bool bIsWon = false;
 	// Default Inputs
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pause Menu Inputs", meta=(AllowPrivateAccess=true))
 		class UInputMappingContext* IMC_PauseMenu;
