@@ -15,10 +15,12 @@ EBTNodeResult::Type UBTTask_Shoot::ExecuteTask(UBehaviorTreeComponent& OwnerComp
 {
 	Super::ExecuteTask(OwnerComp, NodeMemory);
 	if (AAIController* Controller = OwnerComp.GetAIOwner())
-		if (ASoldierCharacter* ShootingCharacter = Cast<ASoldierCharacter>(Controller->GetPawn()))
+		if (ASoldierCharacter* ShootingCharacter = Cast<ASoldierCharacter>(Controller->GetCharacter()))
 		{
 			UBlackboardComponent* BlackBoard = OwnerComp.GetBlackboardComponent();
 			ASoldierCharacter* TargetSoldier = Cast<ASoldierCharacter>(BlackBoard->GetValueAsObject(FName("Player")));
+			if (ShootingCharacter->GetAmmo() <= 0) return EBTNodeResult::Failed;
+			if (ShootingCharacter->GetMagAmmo() <= 0) return EBTNodeResult::Failed;
 			BlackBoard->SetValueAsFloat(FName("PlayerHealth"), TargetSoldier->GetPlayerHealth());
 			ShootingCharacter->Fire();
 			BlackBoard->SetValueAsFloat(FName("PlayerHealth"), TargetSoldier->GetPlayerHealth());

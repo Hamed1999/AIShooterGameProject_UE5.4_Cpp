@@ -32,6 +32,18 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	void Shoot();
 	void HideMesh();
+	UPROPERTY(EditAnywhere, Category= "Properties | Gun Type | Trigger", BlueprintReadWrite, Meta = (AllowPrivateAccess, ClampMin = "0.1"))
+		float TriggerIntervals = 0.1;
+	UPROPERTY(EditAnywhere, Category= "Properties | Range", BlueprintReadWrite, Meta = (AllowPrivateAccess, ClampMin = "0"))
+		float ZoomValue = 150;
+	UPROPERTY(EditAnywhere, Category= "Properties | Range", BlueprintReadWrite, Meta = (AllowPrivateAccess, ClampMin = "5"))
+		float FieldOfView = 8;
+	bool Reload();
+	int CurrentMagAmmo;
+	int CurrentAmmo;
+	UPROPERTY(EditAnywhere, Category= "Ammo", BlueprintReadWrite, Meta = (AllowPrivateAccess, ClampMin = "0.3"))
+		float ReloadTime = 1.3;
+	void SetAmmo(int Ammo);
 private:
 	/**
 	* Methods
@@ -63,6 +75,10 @@ private:
 		float BaseDamage = 12.f;
 	float Damage = BaseDamage;
 	bool bHideMesh = false;
+	UPROPERTY(EditAnywhere, Category= "Ammo", BlueprintReadWrite, Meta = (AllowPrivateAccess, ClampMin = "0"))
+		int MaxAmmo = 144;
+	UPROPERTY(EditAnywhere, Category= "Ammo", BlueprintReadWrite, Meta = (AllowPrivateAccess, ClampMin = "0"))
+		int MaxMagAmmo = 24;
 	/** Indicates how damage will apply to actors.*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Properties | Damage | Base", meta=(AllowPrivateAccess=tru))
 		EDamageType TargetDamageType = EDamageType::PointDamage;

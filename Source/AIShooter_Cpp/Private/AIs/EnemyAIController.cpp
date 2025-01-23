@@ -3,6 +3,7 @@
 
 #include "AIs/EnemyAIController.h"
 
+#include "Actors/Gun.h"
 #include "Kismet/GameplayStatics.h"
 #include "BehaviorTree/BehaviorTree.h"
 #include "BehaviorTree/BlackboardComponent.h"
@@ -59,11 +60,19 @@ void AEnemyAIController::SetTeamId()
 	SetGenericTeamId(TeamId);
 }
 
-void AEnemyAIController::SetBlackboardLocationValues()
+ASoldierCharacter* AEnemyAIController::GetSoldier()
+{
+	if(ASoldierCharacter* SoldierCharacter = Cast<ASoldierCharacter>(GetCharacter()))
+		return SoldierCharacter;
+	return nullptr;
+}
+
+void AEnemyAIController::SetInitBlackboardValues()
 {
 	if(!GetBlackboardComponent()) return;
 	GetBlackboardComponent()->SetValueAsVector(FName("FirstLocation"), GetPawn()->GetActorLocation());
 	GetBlackboardComponent()->SetValueAsVector(FName("Destination"), DestinationLocation);
+	GetBlackboardComponent()->SetValueAsFloat(FName("ReloadTime"), GetSoldier()->GetActiveGun()->ReloadTime);
 }
 
 void AEnemyAIController::BeginPlay()
@@ -78,7 +87,7 @@ void AEnemyAIController::BeginPlay()
 		{
 			RunBehaviorTree(BT_Enemy);
 			if (GetPawn())
-				SetBlackboardLocationValues();
+				SetInitBlackboardValues();
 		}
 	});
      GetWorldTimerManager().SetTimer(TimerHandle,TimerDelegate,2,false);

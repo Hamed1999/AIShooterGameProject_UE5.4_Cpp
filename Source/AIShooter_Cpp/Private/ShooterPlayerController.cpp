@@ -9,6 +9,7 @@
 #include "EnhancedInputComponent.h"
 #include "InputAction.h"
 #include "InputMappingContext.h"
+#include "ShooterCheatManager.h"
 #include "Kismet/GameplayStatics.h"
 
 void AShooterPlayerController::SetHUDClass()
@@ -50,14 +51,14 @@ void AShooterPlayerController::ResumeGame()
 void AShooterPlayerController::RestartGame()
 {
 	ResumeGame();
-	//FTimerHandle TimerHandle;
-	//FTimerDelegate TimerDel;
-	/*TimerDel.BindLambda([&]()
+	// All Soldiers Should be deactivated
+	FTimerHandle TimerHandle;
+	FTimerDelegate TimerDel;
+	TimerDel.BindLambda([&]()
 	{
-		
+		UGameplayStatics::OpenLevel(GetWorld(), FName("TestLevel"));
 	});
-	GetWorldTimerManager().SetTimer(TimerHandle, TimerDel, 8, false);*/
-	UGameplayStatics::OpenLevel(GetWorld(), FName("TestLevel"));
+	GetWorldTimerManager().SetTimer(TimerHandle, TimerDel, 2, false);
 }
 
 void AShooterPlayerController::SetEndGameClass()
@@ -67,6 +68,11 @@ void AShooterPlayerController::SetEndGameClass()
 		EndGameClass = EndGame_Ref.Class.Get();
 }
 
+void AShooterPlayerController::SetCheatClass()
+{
+	CheatClass = UShooterCheatManager::StaticClass();
+}
+
 AShooterPlayerController::AShooterPlayerController()
 {
 	SetHUDClass();
@@ -74,16 +80,24 @@ AShooterPlayerController::AShooterPlayerController()
 	SetIA_Pause();
 	SetPauseMenuClass();
 	SetEndGameClass();
+	SetCheatClass();
 }
 
 void AShooterPlayerController::GameHasEnded(AActor* EndGameFocus, bool bIsWinner)
 {
 	Super::GameHasEnded(EndGameFocus, bIsWinner);
 	bIsWon = bIsWinner;
-	if (UUserWidget* WBP_EndGame = CreateWidget<UUserWidget>(this, EndGameClass))
+	WBP_EndGame = CreateWidget<UUserWidget>(this, EndGameClass);
+	if (WBP_EndGame)
 	{
 		WBP_EndGame->AddToViewport();
-		SetGamePaused();
+		FTimerHandle TimerHandle;
+		FTimerDelegate TimerDel;
+		TimerDel.BindLambda([&]()
+		{
+			SetGamePaused(WBP_EndGame);
+		});
+		GetWorldTimerManager().SetTimer(TimerHandle, TimerDel, 2, false);
 	}
 }
 
@@ -111,7 +125,6 @@ void AShooterPlayerController::CreateMappingContex()
 		Subsystem->AddMappingContext(IMC_PauseMenu, 0);
 	}
 }
-
 void AShooterPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
@@ -129,12 +142,15 @@ void AShooterPlayerController::SetupInputComponent()
 	}
 }
 
-void AShooterPlayerController::SetGamePaused()
+void AShooterPlayerController::SetGamePaused(UUserWidget* Widget)
 {
 	DisableInput(this);
 	SetShowMouseCursor(true);
+	FInputModeUIOnly UIOnly = FInputModeUIOnly();
+	Widget->SetIsFocusable(true);
+	TSharedPtr<SWidget> FocusWidget = Widget->TakeWidget();
+	UIOnly.SetWidgetToFocus(FocusWidget);
 	SetInputMode(FInputModeUIOnly());
-	UGameplayStatics::SetGamePaused(GetWorld(), true);
 }
 
 void AShooterPlayerController::PauseGame()
@@ -143,7 +159,7 @@ void AShooterPlayerController::PauseGame()
 	{
 		WBP_PauseMenu->AddToViewport();
 		WBP_PauseMenu->SetupController(this);
-		SetGamePaused();
+		SetGamePaused(WBP_PauseMenu);
 	}
 	
 }

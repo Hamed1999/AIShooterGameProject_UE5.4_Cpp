@@ -16,6 +16,7 @@
 #include "AIs/EnemyAIController.h"
 #include "Components/CapsuleComponent.h"
 #include "ShooterGameMode.h"
+#include "Blueprint/UserWidget.h"
 
 bool ASoldierCharacter::IsDead()
 {
@@ -25,6 +26,58 @@ bool ASoldierCharacter::IsDead()
 float ASoldierCharacter::GetPlayerHealth()
 {
 	return Health / MaxHealth;
+}
+
+void ASoldierCharacter::RemoveSniperViewWidget()
+{
+	if (WBP_SniperView)
+		if (WBP_SniperView->IsInViewport())
+			WBP_SniperView->RemoveFromParent();
+}
+
+void ASoldierCharacter::Reload()
+{
+	if(bIsReloading) return;
+	bIsReloading = true;
+	bCanChangeGun = false;
+	FTimerHandle TimerHandle;
+	FTimerDelegate TimerDelegate;
+	TimerDelegate.BindLambda([&]()
+	{
+		GetActiveGun()->Reload();
+		bIsReloading = false;
+		bCanChangeGun = true;
+	});
+	GetWorldTimerManager().SetTimer(TimerHandle, TimerDelegate,Guns[ActiveGunIndex]->ReloadTime, false);
+}
+
+int ASoldierCharacter::GetMagAmmo()
+{
+	return (GunIsSafe() ? GetActiveGun()->CurrentMagAmmo :  0);
+}
+
+int ASoldierCharacter::GetAmmo()
+{
+	return (GunIsSafe() ? GetActiveGun()->CurrentAmmo :  0);
+}
+
+void ASoldierCharacter::SetAmmo(int Ammo)
+{
+	if (GunIsSafe())
+		GetActiveGun()->SetAmmo(Ammo);
+}
+
+void ASoldierCharacter::SetHealth(float NewHealth)
+{
+	Health = NewHealth;
+	MaxHealth = NewHealth;
+}
+
+AGun* ASoldierCharacter::GetActiveGun()
+{
+	if(GunIsSafe())
+		return Guns[ActiveGunIndex];
+	return nullptr;
 }
 
 void ASoldierCharacter::CreateSpringArm()
@@ -39,12 +92,20 @@ void ASoldierCharacter::CreateCamera()
 	CameraComponent->SetupAttachment(SpringArm);
 }
 
+void ASoldierCharacter::SetSniperViewClass()
+{
+	ConstructorHelpers::FClassFinder<UUserWidget> SniperViewRef(TEXT("/Game/Widgets/WBP_SniperView"));
+	if (SniperViewRef.Succeeded())
+		SniperViewClass = SniperViewRef.Class.Get();
+}
+
 ASoldierCharacter::ASoldierCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
 	CreateSpringArm();
 	CreateCamera();
 	SetAIControllerClass();
+	SetSniperViewClass();
 }
 
 void ASoldierCharacter::CreateMappingContext()
@@ -60,18 +121,24 @@ void ASoldierCharacter::CreateMappingContext()
 
 void ASoldierCharacter::SpawnGun()
 {
-	if (GunClass)
+	Guns.SetNum(GunClasses.Num());
+	for (int i = 0; i < GunClasses.Num(); i++)
 	{
-		Gun = GetWorld()->SpawnActor<AGun>(GunClass);
-		if (Team == ESoldierTeam::Peace)
-			GetMesh()->HideBoneByName(FName("gun"), PBO_None);
-		else
+		
+		if (auto GunClass = GunClasses[i])
 		{
-			Gun->HideMesh();
+			Guns[i] = GetWorld()->SpawnActor<AGun>(GunClass);
+			if (Team == ESoldierTeam::Peace)
+				GetMesh()->HideBoneByName(FName("gun"), PBO_None);
+			else
+			{
+				Guns[i]->HideMesh();
+			}
+			Guns[i]->AttachToComponent(GetMesh(), FAttachmentTransformRules::KeepRelativeTransform, FName("GunSocket"));
+			Guns[i]->SetOwner(this);
 		}
-		Gun->AttachToComponent(GetMesh(), FAttachmentTransformRules::KeepRelativeTransform, FName("GunSocket"));
-		Gun->SetOwner(this);
 	}
+	ManageGuns();
 }
 
 void ASoldierCharacter::SetTeamId()
@@ -98,6 +165,7 @@ void ASoldierCharacter::BeginPlay()
 	SpawnGun();
 	Health = MaxHealth;
 	SetTeamId();
+	SetTriggerIntervals();
 }
 
 void ASoldierCharacter::Tick(float DeltaTime)
@@ -115,6 +183,9 @@ void ASoldierCharacter::BindEnhancedInputActions(UInputComponent* PlayerInputCom
 		EnhancedInputComponent->BindAction(IA_Jump, ETriggerEvent::Started, this, &ASoldierCharacter::Jump);
 		EnhancedInputComponent->BindAction(IA_Jump, ETriggerEvent::Completed, this, &ASoldierCharacter::StopJumping);
 		EnhancedInputComponent->BindAction(IA_Fire, ETriggerEvent::Triggered, this, &ASoldierCharacter::Fire);
+		EnhancedInputComponent->BindAction(IA_ChangeGun, ETriggerEvent::Triggered, this, &ASoldierCharacter::ChangeGun);
+		EnhancedInputComponent->BindAction(IA_Zoom, ETriggerEvent::Triggered, this, &ASoldierCharacter::Zoom);
+		EnhancedInputComponent->BindAction(IA_Reload, ETriggerEvent::Triggered, this, &ASoldierCharacter::Reload);
 	}
 }
 
@@ -126,36 +197,42 @@ void ASoldierCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 
 void ASoldierCharacter::MoveForward(const FInputActionValue& InputActionValue)
 {
+	if(bIsReloading) return;
 	float InputValue = InputActionValue.Get<float>();
 	AddMovementInput(GetActorForwardVector() * InputValue);
 }
 
 void ASoldierCharacter::MoveRight(const FInputActionValue& InputActionValue)
 {
+	if(bIsReloading) return;
 	float InputValue = InputActionValue.Get<float>();
 	AddMovementInput(GetActorRightVector() * InputValue);
 }
 
 void ASoldierCharacter::TurnView(const FInputActionValue& InputActionValue)
 {
-	FVector2D InputValue = InputActionValue.Get<FVector2D>();
-	AddControllerYawInput(InputValue.X);
-	AddControllerPitchInput(-1* InputValue.Y);
+	const FVector2D InputValue = InputActionValue.Get<FVector2D>();
+	float TuneSpeed = 1;
+	if (bInZoom && GunIsSafe())
+		TuneSpeed = 5/(90-GetActiveGun()->FieldOfView);
+	AddControllerYawInput(InputValue.X * TuneSpeed);
+	AddControllerPitchInput(-1* InputValue.Y * TuneSpeed);
 }
 
 void ASoldierCharacter::Fire()
 {
+	if(bIsFiring || bIsReloading) return;
 	bIsFiring = true;
-	if (Gun)
-		Gun->Shoot();
-
 	FTimerHandle TimerHandle;
 	FTimerDelegate TimerDel;
 	TimerDel.BindLambda([&]()
 	{
 		bIsFiring = false;
 	});
-	GetWorldTimerManager().SetTimer(TimerHandle, TimerDel, 0.01, false);
+	float DelayTime = GunIsSafe() ? GetActiveGun()->TriggerIntervals : 0.01;
+	GetWorldTimerManager().SetTimer(TimerHandle, TimerDel, DelayTime, false);
+	if (GetActiveGun())
+		GetActiveGun()->Shoot();
 }
 
 float ASoldierCharacter::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent,
@@ -181,6 +258,79 @@ void ASoldierCharacter::HandleDeath()
 	}
 	//SetLifeSpan(7.0);
 	//UnPossessed();
+}
+
+void ASoldierCharacter::SetTriggerIntervals()
+{
+	if (GunIsSafe())
+		Cast<UInputTriggerPulse>(IA_Fire->Triggers[0])->Interval =GetActiveGun()->TriggerIntervals;
+}
+
+void ASoldierCharacter::ManageGuns()
+{
+	for (int i = 0; i <  Guns.Num(); i++)
+	{
+		if (i == ActiveGunIndex)
+			Guns[i]->SetActorHiddenInGame(false);
+		else
+			Guns[i]->SetActorHiddenInGame(true);
+	}
+	SetTriggerIntervals();
+}
+
+void ASoldierCharacter::ChangeGun(const FInputActionValue& InputValue)
+{
+	float ScrolVal = InputValue.Get<float>();
+	if(ScrolVal != 0 && bCanChangeGun)
+	{
+		ActiveGunIndex += ScrolVal;
+		if(ActiveGunIndex >= Guns.Num())
+			ActiveGunIndex = 0;
+		if(ActiveGunIndex <= -1)
+			ActiveGunIndex = Guns.Num() -1;
+		ManageGuns();
+	}
+}
+
+void ASoldierCharacter::ZoomInSniperCamera()
+{
+	bInZoom = true;
+	bCanChangeGun = false;
+	SpringArm->TargetArmLength = -1*GetActiveGun()->ZoomValue;
+	CameraComponent->FieldOfView = GetActiveGun()->FieldOfView;
+	WBP_SniperView = CreateWidget<UUserWidget>(GetWorld(), SniperViewClass);
+	if (WBP_SniperView)
+		WBP_SniperView->AddToViewport();
+}
+
+void ASoldierCharacter::ZoomOutSniperCamera()
+{
+	bInZoom = false;
+	bCanChangeGun = true;
+	SpringArm->TargetArmLength = 200;
+	CameraComponent->FieldOfView = 90;
+	RemoveSniperViewWidget();
+}
+
+void ASoldierCharacter::Zoom()
+{
+	if (ActiveGunIndex != 2) return;
+	if (!bInZoom)
+	{
+		ZoomInSniperCamera();
+	}
+	else
+	{
+		ZoomOutSniperCamera();
+	}
+}
+
+bool ASoldierCharacter::GunIsSafe()
+{
+	if(!Guns.IsEmpty() && ActiveGunIndex < Guns.Num())
+		if(IsValid(Guns[ActiveGunIndex]))
+			return true;
+	return false;
 }
 
 FGenericTeamId ASoldierCharacter::GetGenericTeamId() const

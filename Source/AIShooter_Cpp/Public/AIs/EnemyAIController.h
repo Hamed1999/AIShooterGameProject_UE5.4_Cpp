@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "AIController.h"
+#include "Characters/SoldierCharacter.h"
 #include "EnemyAIController.generated.h"
 
 /**
@@ -30,7 +31,8 @@ protected:
 	void BindOnPlayerSeen();
 	void SetBehaviorTree();
 	void SetTeamId();
-	void SetBlackboardLocationValues();
+	class ASoldierCharacter* GetSoldier();
+	void SetInitBlackboardValues();
 	/**
 	 * Global Properties
 	 */

@@ -18,6 +18,7 @@ public:
 	void SetOwnerCharacter(ACharacter* OwnerCharacter);
 private:
 	UFUNCTION(BlueprintPure)
-		float GetPlayerHealth(); 
-	 class ASoldierCharacter* PlayerCharacter = nullptr;
+		float GetPlayerHealth();
+	UPROPERTY(BlueprintReadOnly, Meta = (AllowPrivateAccess))
+		class ASoldierCharacter* PlayerCharacter = nullptr;
 };

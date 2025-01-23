@@ -10,6 +10,17 @@
 
 #define OUT
 
+void AGun::SetAmmo(int Ammo)
+{
+	if (Ammo > CurrentMagAmmo)
+		CurrentAmmo = Ammo;
+	else
+	{
+		CurrentAmmo = Ammo;
+		CurrentMagAmmo = Ammo;
+	}
+}
+
 void AGun::CreateRootComponent()
 {
 	Root = CreateDefaultSubobject<USceneComponent>(FName("Root"));
@@ -32,6 +43,8 @@ AGun::AGun()
 void AGun::BeginPlay()
 {
 	Super::BeginPlay();
+	CurrentAmmo = MaxAmmo;
+	CurrentMagAmmo = MaxMagAmmo;
 }
 
 
@@ -148,16 +161,18 @@ void AGun::HandleRadialDamage(FHitResult const& BulletHitResults)
 
 void  AGun::Shoot()
 {
+	if (CurrentMagAmmo <= 0) return;
 	HandleFiringEffects();
 	FindCameraPoint();
 	FHitResult BulletHitResults;
 	if(ApplyBulletTrace(BulletHitResults))
 	{
+		CurrentMagAmmo--;
 		if(APawn* DamagedPawn = Cast<APawn>(BulletHitResults.GetActor())) // Modify Later
 		{
 			HandleBodyImpactEffects(BulletHitResults);
 			if (BulletHitResults.BoneName == "head")
-				Damage = 100;
+				Damage = 500;
 			else
 				Damage = BaseDamage;
 			HandleApplyDamage(BulletHitResults, DamagedPawn);
@@ -174,4 +189,22 @@ void AGun::HideMesh()
 {
 	bHideMesh = true;
 	GunMeshComponent->SetVisibility(false);
+}
+
+bool AGun::Reload()
+{
+	if (CurrentAmmo == 0) return false;
+    	int dif = MaxMagAmmo - CurrentMagAmmo;
+    	if (dif == 0) return true;
+    	if (CurrentAmmo >= dif)
+    	{
+    		CurrentAmmo -= dif;
+    		CurrentMagAmmo = MaxMagAmmo;
+    	}
+    	else
+    	{
+    		CurrentMagAmmo += CurrentAmmo;
+    		CurrentAmmo = 0;
+    	}
+    	return true;
 }

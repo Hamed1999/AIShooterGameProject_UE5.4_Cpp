@@ -18,6 +18,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 		void RestartGame();
 	void SetEndGameClass();
+	void SetCheatClass();
 	AShooterPlayerController();
 	virtual void GameHasEnded(AActor* EndGameFocus, bool bIsWinner) override;
 	UFUNCTION(BlueprintPure, Category="EndGame")
@@ -26,7 +27,7 @@ public:
 protected:
 	virtual void BeginPlay() override;
 	virtual void SetupInputComponent() override;
-	void SetGamePaused();
+	void SetGamePaused(class UUserWidget* Widget);
 
 private:
 	/**
@@ -44,11 +45,12 @@ private:
 	 */
 	TSubclassOf<class UPlayerHUD> PlayerHUDClass;
 	TSubclassOf<class UPauseMenu> PauseMenuClass;
-	TSubclassOf<UUserWidget> EndGameClass;
+	TSubclassOf<class UUserWidget> EndGameClass;
 	bool bIsWon = false;
 	// Default Inputs
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pause Menu Inputs", meta=(AllowPrivateAccess=true))
 		class UInputMappingContext* IMC_PauseMenu;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pause Menu Inputs", meta=(AllowPrivateAccess=true))
 		class UInputAction* IA_Pause;
+	UUserWidget* WBP_EndGame = nullptr;
 };
