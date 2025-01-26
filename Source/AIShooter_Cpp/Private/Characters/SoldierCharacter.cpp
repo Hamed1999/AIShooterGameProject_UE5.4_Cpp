@@ -245,7 +245,6 @@ float ASoldierCharacter::TakeDamage(float DamageAmount, struct FDamageEvent cons
 	Health -= ActualDamage;
 	if (Health <= 0)
 		HandleDeath();
-	UE_LOG(LogTemp, Error, TEXT("Health of %s: %f"), *GetName(), Health);
 	return ActualDamage;
 }
 
