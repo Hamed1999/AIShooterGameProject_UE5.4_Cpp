@@ -90,7 +90,7 @@ void AEnemyAIController::BeginPlay()
 				SetInitBlackboardValues();
 		}
 	});
-     GetWorldTimerManager().SetTimer(TimerHandle,TimerDelegate,2,false);
+     GetWorldTimerManager().SetTimer(TimerHandle,TimerDelegate,1,false);
 }
 
 void AEnemyAIController::OnPlayerSeen(AActor* Actor, FAIStimulus Stimulus)

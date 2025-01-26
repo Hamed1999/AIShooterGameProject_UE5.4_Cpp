@@ -102,6 +102,10 @@ void ASoldierCharacter::SetSniperViewClass()
 ASoldierCharacter::ASoldierCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
+	/**
+	 * Team ID Should be Set Before Setting the AI Controller Class
+	 */
+	SetTeamId();
 	CreateSpringArm();
 	CreateCamera();
 	SetAIControllerClass();
@@ -161,11 +165,10 @@ void ASoldierCharacter::SetAIControllerClass()
 void ASoldierCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+	SetTeamId();
 	CreateMappingContext();
 	SpawnGun();
 	Health = MaxHealth;
-	SetTeamId();
-	SetTriggerIntervals();
 }
 
 void ASoldierCharacter::Tick(float DeltaTime)
@@ -260,12 +263,6 @@ void ASoldierCharacter::HandleDeath()
 	//UnPossessed();
 }
 
-void ASoldierCharacter::SetTriggerIntervals()
-{
-	if (GunIsSafe())
-		Cast<UInputTriggerPulse>(IA_Fire->Triggers[0])->Interval =GetActiveGun()->TriggerIntervals;
-}
-
 void ASoldierCharacter::ManageGuns()
 {
 	for (int i = 0; i <  Guns.Num(); i++)
@@ -275,7 +272,6 @@ void ASoldierCharacter::ManageGuns()
 		else
 			Guns[i]->SetActorHiddenInGame(true);
 	}
-	SetTriggerIntervals();
 }
 
 void ASoldierCharacter::ChangeGun(const FInputActionValue& InputValue)

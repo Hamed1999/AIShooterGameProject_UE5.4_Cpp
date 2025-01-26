@@ -41,5 +41,5 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI", meta=(AllowPrivateAccess=true))
 		UAIPerceptionComponent* AIPerceptionComponent;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI", meta=(AllowPrivateAccess=true))
-		FGenericTeamId TeamId = FGenericTeamId(1);
+		FGenericTeamId TeamId = FGenericTeamId(0);
 };
