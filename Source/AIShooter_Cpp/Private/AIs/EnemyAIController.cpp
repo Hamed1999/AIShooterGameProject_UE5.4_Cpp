@@ -78,11 +78,12 @@ void AEnemyAIController::SetInitBlackboardValues()
 void AEnemyAIController::BeginPlay()
 {
 	Super::BeginPlay();
-	SetTeamId();
+	
 	FTimerHandle TimerHandle;
 	FTimerDelegate TimerDelegate;
 	TimerDelegate.BindLambda([&]()
 	{
+		SetTeamId();
 		if (BT_Enemy)
 		{
 			RunBehaviorTree(BT_Enemy);
